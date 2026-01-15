@@ -32,19 +32,20 @@ function hideTooltip() {
 
 // ---------- Bar chart setup ----------
 const barCfg = {
-  w: 520,
-  h: 220,
-  m: { top: 18, right: 16, bottom: 70, left: 52 }
+  h: 260,
+  m: { top: 18, right: 16, bottom: 80, left: 52 }
 };
 
 let barSvg, barG, barXAxisG, barYAxisG;
 
 function initBarChart() {
   const el = d3.select("#barChart");
-  el.selectAll("*").remove(); // ensure clean
+  el.selectAll("*").remove();
+
+  const w = el.node().clientWidth || 520; // fallback
 
   barSvg = el.append("svg")
-    .attr("width", barCfg.w)
+    .attr("width", w)
     .attr("height", barCfg.h);
 
   barG = barSvg.append("g")
@@ -58,8 +59,14 @@ function initBarChart() {
     .attr("class", "axis");
 }
 
+window.addEventListener("resize", () => {
+  initBarChart();
+  renderBarChart();
+});
+
 function innerBarW() {
-  return barCfg.w - barCfg.m.left - barCfg.m.right;
+  const w = +barSvg.attr("width");
+  return w - barCfg.m.left - barCfg.m.right;
 }
 function innerBarH() {
   return barCfg.h - barCfg.m.top - barCfg.m.bottom;
