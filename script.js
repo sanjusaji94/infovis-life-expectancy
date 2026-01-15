@@ -67,7 +67,9 @@ function initBarChart() {
 
 window.addEventListener("resize", () => {
   initBarChart();
+  initHistChart();
   renderBarChart();
+  renderHistChart();
 });
 
 function innerBarW() {
