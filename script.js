@@ -15,6 +15,11 @@ function toNumber(x) {
   return Number.isFinite(n) ? n : null;
 }
 
+function shortLabel(s, max = 14) {
+  if (!s) return s;
+  return s.length > max ? s.slice(0, max - 1) + "…" : s;
+}
+
 let fullData = [];
 
 // Shared tooltip for all charts
@@ -33,7 +38,8 @@ function hideTooltip() {
 // ---------- Bar chart setup ----------
 const barCfg = {
   h: 260,
-  m: { top: 18, right: 16, bottom: 80, left: 52 }
+  m: { top: 18, right: 16, bottom: 100, left: 52 }
+
 };
 
 let barSvg, barG, barXAxisG, barYAxisG;
@@ -104,13 +110,17 @@ function renderBarChart() {
     .domain([0, d3.max(rows, d => d.life)]).nice()
     .range([innerBarH(), 0]);
 
-  // Axes
-  barXAxisG.call(d3.axisBottom(x).tickSizeOuter(0))
-    .selectAll("text")
-    .attr("transform", "rotate(-35)")
-    .style("text-anchor", "end");
+// Axes
+barXAxisG.call(d3.axisBottom(x).tickSizeOuter(0));
 
-  barYAxisG.call(d3.axisLeft(y));
+barXAxisG.selectAll("text")
+  .text(d => shortLabel(d, 14))   // SHORTEN LABEL
+  .attr("transform", "rotate(-35)")
+  .style("text-anchor", "end")
+  .append("title")                // native tooltip on axis label
+  .text(d => d);                  // full country name
+
+barYAxisG.call(d3.axisLeft(y));
 
   // Bars
   barG.selectAll("rect.bar")
