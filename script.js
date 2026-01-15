@@ -156,6 +156,93 @@ barYAxisG.call(d3.axisLeft(y));
     .text(`Top 10 — Year ${state.year}`);
 }
 
+// ---------- Histogram setup ----------
+const histCfg = {
+  h: 260,
+  m: { top: 18, right: 16, bottom: 55, left: 52 }
+};
+
+let histSvg, histG, histXAxisG, histYAxisG;
+
+function initHistChart() {
+  const el = d3.select("#histChart");
+  el.selectAll("*").remove();
+
+  const w = el.node().clientWidth || 520;
+
+  histSvg = el.append("svg")
+    .attr("width", w)
+    .attr("height", histCfg.h);
+
+  histG = histSvg.append("g")
+    .attr("transform", `translate(${histCfg.m.left},${histCfg.m.top})`);
+
+  histXAxisG = histG.append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(0,${innerHistH()})`);
+
+  histYAxisG = histG.append("g")
+    .attr("class", "axis");
+}
+
+function innerHistW() {
+  const w = +histSvg.attr("width");
+  return w - histCfg.m.left - histCfg.m.right;
+}
+function innerHistH() {
+  return histCfg.h - histCfg.m.top - histCfg.m.bottom;
+}
+
+function renderHistChart() {
+  // values for selected year
+  const values = fullData
+    .filter(d => d.Year === state.year && d.life != null)
+    .map(d => d.life);
+
+  if (values.length === 0) return;
+
+  const x = d3.scaleLinear()
+    .domain(d3.extent(values)).nice()
+    .range([0, innerHistW()]);
+
+  const bins = d3.bin()
+    .domain(x.domain())
+    .thresholds(12)(values);
+
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(bins, d => d.length)]).nice()
+    .range([innerHistH(), 0]);
+
+  histXAxisG.call(d3.axisBottom(x).ticks(6));
+  histYAxisG.call(d3.axisLeft(y));
+
+  histG.selectAll("rect.bin")
+    .data(bins)
+    .join("rect")
+    .attr("class", "bin")
+    .attr("x", d => x(d.x0) + 1)
+    .attr("y", d => y(d.length))
+    .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 2))
+    .attr("height", d => innerHistH() - y(d.length))
+    .attr("fill", "#999")
+    .on("mousemove", (event, d) => {
+      showTooltip(
+        `Year: <b>${state.year}</b><br/>Range: <b>${d.x0.toFixed(1)}–${d.x1.toFixed(1)}</b><br/>Countries: <b>${d.length}</b>`,
+        event
+      );
+    })
+    .on("mouseleave", hideTooltip);
+
+  histG.selectAll("text.histTitle")
+    .data([0])
+    .join("text")
+    .attr("class", "histTitle")
+    .attr("x", 0)
+    .attr("y", -6)
+    .attr("font-size", 12)
+    .text(`Distribution — Year ${state.year}`);
+}
+
 // ---------- Load data + connect slider ----------
 d3.csv(CSV_PATH, d => ({
   Country: d.Country?.trim(),
