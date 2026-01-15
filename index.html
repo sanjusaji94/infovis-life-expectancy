@@ -1,13 +1,55 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>GA2 Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Global Life Expectancy Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
+
 <body>
-  <h1>INDEX OK ✅</h1>
-  <p id="debug">waiting...</p>
+  <div class="page">
+    <div class="card pageCard">
+      <h1>Global Life Expectancy Dashboard</h1>
+      <p class="subtitle">Exploring life expectancy trends and correlations with economic indicators</p>
+
+      <div class="controls">
+        <div class="controlRow">
+          <label for="yearSlider"><b>Select Year:</b></label>
+          <input id="yearSlider" type="range" min="2000" max="2019" step="1" value="2019" />
+          <div id="yearValue" class="yearValue">2019</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Life Expectancy Over Time</h2>
+          <div id="lineChart" class="viz"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Top Countries by Life Expectancy</h2>
+          <div id="barChart" class="viz"></div>
+        </div>
+
+        <div class="panel">
+          <h2>GDP per Capita vs Life Expectancy</h2>
+          <div id="scatterChart" class="viz"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Distribution of Life Expectancy</h2>
+          <div id="histChart" class="viz"></div>
+        </div>
+      </div>
+
+      <p id="debug" class="debug">Loading…</p>
+    </div>
+  </div>
+
+  <!-- One tooltip for all charts -->
+  <div id="tooltip" class="tooltip" style="opacity:0;"></div>
 
   <script src="script.js"></script>
 </body>

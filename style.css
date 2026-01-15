@@ -1,0 +1,94 @@
+:root{
+  --border:#e4e4e4;
+  --bg:#f4f4f4;
+}
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--bg);
+}
+
+.page{ padding: 24px; }
+
+.card{
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.pageCard{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px 18px 22px 18px;
+}
+
+h1{ text-align:center; margin: 6px 0 6px 0; }
+
+.subtitle{
+  text-align:center;
+  margin: 0 0 18px 0;
+  color:#555;
+}
+
+.controls{
+  background:#f7f7f7;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 0 0 18px 0;
+}
+
+.controlRow{
+  display:flex;
+  align-items:center;
+  gap: 14px;
+}
+
+#yearSlider{ width: 100%; }
+
+.yearValue{
+  min-width: 52px;
+  text-align: right;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.panel{
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  min-height: 260px;
+}
+
+.panel h2{
+  text-align:center;
+  font-size: 16px;
+  margin: 6px 0 10px 0;
+}
+
+.viz{ height: 210px; }
+
+.debug{
+  margin-top: 14px;
+  color:#444;
+  font-size: 12px;
+}
+
+/* shared tooltip */
+.tooltip{
+  position: fixed;
+  pointer-events: none;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
