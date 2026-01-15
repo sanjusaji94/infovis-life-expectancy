@@ -284,6 +284,7 @@ d3.csv(CSV_PATH, d => ({
 
     updateDebug(minYear, maxYear);
     renderBarChart(); // bar updates with year
+    renderHistChart(); // histogram updates with year
   });
 
 }).catch(err => {
