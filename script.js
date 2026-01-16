@@ -84,7 +84,7 @@ function makeResponsiveSvg(containerSelector, widthPx, heightPx) {
 const barCfg = {
   w: 700, // base viewBox width (scales down responsively)
   h: 260,
-  m: { top: 18, right: 16, bottom: 100, left: 52 }
+  m: { top: 18, right: 16, bottom: 80, left: 52 }
 };
 
 let barSvg, barG, barXAxisG, barYAxisG;
