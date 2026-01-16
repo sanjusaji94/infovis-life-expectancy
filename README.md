@@ -60,11 +60,12 @@ The dashboard consists of four coordinated views:
 
 ## Project Structure
 
+.
 ├── index.html
 ├── style.css
 ├── script.js
 └── data
-└── Life_Expectancy_Data.csv
+    └── Life_Expectancy_Data.csv
 
 ---
 
