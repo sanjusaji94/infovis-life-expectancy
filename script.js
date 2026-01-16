@@ -245,6 +245,94 @@ function renderHistChart() {
     .text(`Distribution — Year ${state.year}`);
 }
 
+// ---------- Scatter setup ----------
+const scatCfg = {
+  h: 260,
+  m: { top: 18, right: 16, bottom: 55, left: 52 }
+};
+
+let scatSvg, scatG, scatXAxisG, scatYAxisG;
+
+function initScatterChart() {
+  const el = d3.select("#scatterChart");
+  el.selectAll("*").remove();
+
+  const w = el.node().clientWidth || 520;
+
+  scatSvg = el.append("svg")
+    .attr("width", w)
+    .attr("height", scatCfg.h);
+
+  scatG = scatSvg.append("g")
+    .attr("transform", `translate(${scatCfg.m.left},${scatCfg.m.top})`);
+
+  scatXAxisG = scatG.append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(0,${innerScatH()})`);
+
+  scatYAxisG = scatG.append("g")
+    .attr("class", "axis");
+}
+
+function innerScatW() {
+  const w = +scatSvg.attr("width");
+  return w - scatCfg.m.left - scatCfg.m.right;
+}
+function innerScatH() {
+  return scatCfg.h - scatCfg.m.top - scatCfg.m.bottom;
+}
+
+function renderScatterChart() {
+  const rows = fullData
+    .filter(d => d.Year === state.year && d.life != null && d.gdp != null);
+
+  if (rows.length === 0) return;
+
+  const x = d3.scaleLinear()
+    .domain(d3.extent(rows, d => d.gdp)).nice()
+    .range([0, innerScatW()]);
+
+  const y = d3.scaleLinear()
+    .domain(d3.extent(rows, d => d.life)).nice()
+    .range([innerScatH(), 0]);
+
+  scatXAxisG.call(d3.axisBottom(x).ticks(6));
+  scatYAxisG.call(d3.axisLeft(y));
+
+  scatG.selectAll("circle.pt")
+    .data(rows, d => d.Country)
+    .join("circle")
+    .attr("class", "pt")
+    .attr("cx", d => x(d.gdp))
+    .attr("cy", d => y(d.life))
+    .attr("r", d => (d.Country === state.country ? 5 : 3))
+    .attr("fill", d => (d.Country === state.country ? "black" : "#999"))
+    .attr("opacity", 0.85)
+    .on("mousemove", (event, d) => {
+      showTooltip(
+        `<b>${d.Country}</b><br/>Year: ${state.year}<br/>Life expectancy: ${d.life}<br/>GDP: ${d.gdp}`,
+        event
+      );
+    })
+    .on("mouseleave", hideTooltip)
+    .on("click", (_, d) => {
+      state.country = d.Country;
+      // update highlight in bar & scatter now
+      renderBarChart();
+      renderScatterChart();
+      // Next stage: renderLineChart() when line exists
+    });
+
+  scatG.selectAll("text.scatTitle")
+    .data([0])
+    .join("text")
+    .attr("class", "scatTitle")
+    .attr("x", 0)
+    .attr("y", -6)
+    .attr("font-size", 12)
+    .text(`GDP vs Life Expectancy — Year ${state.year}`);
+}
+
 // ---------- Load data + connect slider ----------
 d3.csv(CSV_PATH, d => ({
   Country: d.Country?.trim(),
