@@ -182,6 +182,27 @@ function renderBarChart() {
     .attr("y", -6)
     .attr("font-size", 12)
     .text(`Top 10 — Year ${state.year}`);
+  
+barG.selectAll(".xLabel")
+  .data([0])
+  .join("text")
+  .attr("class", "xLabel")
+  .attr("x", innerBarW() / 2)
+  .attr("y", innerBarH() + 70)
+  .attr("text-anchor", "middle")
+  .attr("font-size", 14)
+  .text("Country");
+
+barG.selectAll(".yLabel")
+  .data([0])
+  .join("text")
+  .attr("class", "yLabel")
+  .attr("transform", "rotate(-90)")
+  .attr("x", -innerBarH() / 2)
+  .attr("y", -40)
+  .attr("text-anchor", "middle")
+  .attr("font-size", 14)
+  .text("Life Expectancy (years)");
 }
 
 // =======================================================
@@ -265,6 +286,28 @@ function renderHistChart() {
     .attr("y", -6)
     .attr("font-size", 12)
     .text(`Distribution — Year ${state.year}`);
+
+    histG.selectAll(".xLabel")
+  .data([0])
+  .join("text")
+  .attr("class", "xLabel")
+  .attr("x", innerHistW() / 2)
+  .attr("y", innerHistH() + 40)
+  .attr("text-anchor", "middle")
+  .attr("font-size", 14)
+  .text("Life Expectancy (years)");
+
+histG.selectAll(".yLabel")
+  .data([0])
+  .join("text")
+  .attr("class", "yLabel")
+  .attr("transform", "rotate(-90)")
+  .attr("x", -innerHistH() / 2)
+  .attr("y", -40)
+  .attr("text-anchor", "middle")
+  .attr("font-size", 14)
+  .text("Number of Countries");
+
 }
 
 // =======================================================
@@ -342,6 +385,28 @@ function renderScatterChart() {
     .attr("y", -6)
     .attr("font-size", 12)
     .text(`GDP vs Life Expectancy — Year ${state.year}`);
+
+    scatG.selectAll(".xLabel")
+  .data([0])
+  .join("text")
+  .attr("class", "xLabel")
+  .attr("x", innerScatW() / 2)
+  .attr("y", innerScatH() + 40)
+  .attr("text-anchor", "middle")
+  .attr("font-size", 14)
+  .text("GDP per Capita");
+
+scatG.selectAll(".yLabel")
+  .data([0])
+  .join("text")
+  .attr("class", "yLabel")
+  .attr("transform", "rotate(-90)")
+  .attr("x", -innerScatH() / 2)
+  .attr("y", -40)
+  .attr("text-anchor", "middle")
+  .attr("font-size", 14)
+  .text("Life Expectancy (years)");
+
 }
 
 // =======================================================
@@ -435,6 +500,29 @@ function renderLineChart() {
     .attr("y", -6)
     .attr("font-size", 12)
     .text(`Trend — ${state.country}`);
+
+// X-axis label
+lineG.selectAll(".xLabel")
+  .data([0])
+  .join("text")
+  .attr("class", "xLabel")
+  .attr("x", innerLineW() / 2)
+  .attr("y", innerLineH() + 40)
+  .attr("text-anchor", "middle")
+  .attr("font-size", 14)
+  .text("Year");
+
+// Y-axis label
+lineG.selectAll(".yLabel")
+  .data([0])
+  .join("text")
+  .attr("class", "yLabel")
+  .attr("transform", "rotate(-90)")
+  .attr("x", -innerLineH() / 2)
+  .attr("y", -40)
+  .attr("text-anchor", "middle")
+  .attr("font-size", 14)
+  .text("Life Expectancy (years)");
 }
 
 // =======================================================
