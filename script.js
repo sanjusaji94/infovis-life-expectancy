@@ -32,7 +32,7 @@ function updateDebug() {
   const el = document.getElementById("debug");
   if (!el) return;
   el.textContent =
-    `Loaded ${fullData.length} rows • Year range: ${minYearGlobal}–${maxYearGlobal} • Selected year: ${state.year} • Selected country: ${state.country ?? "-"}`;
+    `Year range: ${minYearGlobal}–${maxYearGlobal} • Selected year: ${state.year} • Selected country: ${state.country ?? "-"}`;
 }
 
 // ---------------- Tooltip ----------------
