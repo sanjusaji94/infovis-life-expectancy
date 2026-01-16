@@ -3,13 +3,19 @@ console.log("SCRIPT OK");
 const CSV_PATH = "data/Life_Expectancy_Data.csv";
 const COL_LIFE = "Life expectancy "; // trailing space in dataset
 
-//  Shared state
+// Shared state
 const state = {
   year: null,
   country: null
 };
 
-// Helper utilities
+// Globals for debug scope
+let minYearGlobal = null;
+let maxYearGlobal = null;
+
+let fullData = [];
+
+// ---------------- Helpers ----------------
 function toNumber(x) {
   const v = (x ?? "").toString().trim();
   if (v === "") return null;
@@ -22,10 +28,16 @@ function shortLabel(s, max = 14) {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
-let fullData = [];
+function updateDebug() {
+  const el = document.getElementById("debug");
+  if (!el) return;
+  el.textContent =
+    `Loaded ${fullData.length} rows • Year range: ${minYearGlobal}–${maxYearGlobal} • Selected year: ${state.year} • Selected country: ${state.country ?? "-"}`;
+}
 
-// Shared tooltip for all charts
+// ---------------- Tooltip ----------------
 const tooltip = d3.select("#tooltip");
+
 function showTooltip(html, event) {
   tooltip
     .style("opacity", 1)
@@ -37,6 +49,7 @@ function hideTooltip() {
   tooltip.style("opacity", 0);
 }
 
+// One place to set country (dropdown + bar click + scatter click)
 function setCountry(newCountry) {
   state.country = newCountry;
 
@@ -44,30 +57,47 @@ function setCountry(newCountry) {
   const sel = document.getElementById("countrySelect");
   if (sel && sel.value !== newCountry) sel.value = newCountry;
 
-  // re-render charts that depend on selected country
+  // re-render dependent charts
   renderLineChart();
-  renderBarChart();       // highlight if in top 10
-  renderScatterChart();   // highlight point
+  renderBarChart();
+  renderScatterChart();
+
+  updateDebug();
 }
 
-// ---------- Bar chart setup ----------
+// ---------------- Responsive SVG helper ----------------
+// Creates an SVG that scales to container width using viewBox.
+function makeResponsiveSvg(containerSelector, widthPx, heightPx) {
+  const el = d3.select(containerSelector);
+  el.selectAll("*").remove();
+
+  const svg = el.append("svg")
+    .attr("viewBox", `0 0 ${widthPx} ${heightPx}`)
+    .attr("preserveAspectRatio", "xMinYMin meet");
+
+  return svg;
+}
+
+// =======================================================
+// BAR CHART
+// =======================================================
 const barCfg = {
+  w: 700, // base viewBox width (scales down responsively)
   h: 260,
   m: { top: 18, right: 16, bottom: 100, left: 52 }
-
 };
 
 let barSvg, barG, barXAxisG, barYAxisG;
 
+function innerBarW() {
+  return barCfg.w - barCfg.m.left - barCfg.m.right;
+}
+function innerBarH() {
+  return barCfg.h - barCfg.m.top - barCfg.m.bottom;
+}
+
 function initBarChart() {
-  const el = d3.select("#barChart");
-  el.selectAll("*").remove();
-
-  const w = el.node().clientWidth || 520; // fallback
-
-  barSvg = el.append("svg")
-    .attr("width", w)
-    .attr("height", barCfg.h);
+  barSvg = makeResponsiveSvg("#barChart", barCfg.w, barCfg.h);
 
   barG = barSvg.append("g")
     .attr("transform", `translate(${barCfg.m.left},${barCfg.m.top})`);
@@ -80,47 +110,24 @@ function initBarChart() {
     .attr("class", "axis");
 }
 
-window.addEventListener("resize", () => {
-  initBarChart();
-  initHistChart();
-  initScatterChart();
-  initLineChart();
-  renderBarChart();
-  renderHistChart();
-  renderScatterChart();
-  renderLineChart();
-});
-
-function innerBarW() {
-  const w = +barSvg.attr("width");
-  return w - barCfg.m.left - barCfg.m.right;
-}
-function innerBarH() {
-  return barCfg.h - barCfg.m.top - barCfg.m.bottom;
-}
-
-function getYearData() {
-  // Filter to selected year, keep valid values
-  return fullData.filter(d => d.Year === state.year && d.life != null);
-}
-
 function renderBarChart() {
-  const yearData = getYearData();
+  if (!barG) return;
 
-  // If duplicates per country exist, keep max life (safe)
+  const yearData = fullData.filter(d => d.Year === state.year && d.life != null);
+
   const byCountry = d3.rollup(
     yearData,
     v => d3.max(v, d => d.life),
     d => d.Country
   );
 
-  let rows = Array.from(byCountry, ([Country, life]) => ({ Country, life }));
+  let rows = Array.from(byCountry, ([Country, life]) => ({ Country, life }))
+    .sort((a, b) => b.life - a.life)
+    .slice(0, 10);
 
-  rows.sort((a, b) => b.life - a.life);
-  rows = rows.slice(0, 10); // Top 10
-
-  // If no country selected yet, choose first
-  if (!state.country) state.country = rows[0]?.Country ?? null;
+  // This line means: if no country selected yet, pick the first bar country.
+  // It only runs on initial load (before user picks anything).
+  if (!state.country && rows.length > 0) state.country = rows[0].Country;
 
   const x = d3.scaleBand()
     .domain(rows.map(d => d.Country))
@@ -131,17 +138,22 @@ function renderBarChart() {
     .domain([0, d3.max(rows, d => d.life)]).nice()
     .range([innerBarH(), 0]);
 
-// Axes
-barXAxisG.call(d3.axisBottom(x).tickSizeOuter(0));
+  // Axis
+  barXAxisG.call(d3.axisBottom(x).tickSizeOuter(0));
 
-barXAxisG.selectAll("text")
-  .text(d => shortLabel(d, 14))   // SHORTEN LABEL
-  .attr("transform", "rotate(-35)")
-  .style("text-anchor", "end")
-  .append("title")                // native tooltip on axis label
-  .text(d => d);                  // full country name
+  // Shorten tick labels + ensure title is not appended repeatedly
+  barXAxisG.selectAll("text")
+    .text(d => shortLabel(d, 14))
+    .attr("transform", "rotate(-35)")
+    .style("text-anchor", "end")
+    .each(function(d) {
+      d3.select(this).selectAll("title")
+        .data([d])
+        .join("title")
+        .text(d);
+    });
 
-barYAxisG.call(d3.axisLeft(y));
+  barYAxisG.call(d3.axisLeft(y));
 
   // Bars
   barG.selectAll("rect.bar")
@@ -160,11 +172,8 @@ barYAxisG.call(d3.axisLeft(y));
       );
     })
     .on("mouseleave", hideTooltip)
-    .on("click", (_, d) => {
-     setCountry(d.Country);
-    });
+    .on("click", (_, d) => setCountry(d.Country));
 
-  // Title inside chart (optional)
   barG.selectAll("text.barTitle")
     .data([0])
     .join("text")
@@ -175,23 +184,26 @@ barYAxisG.call(d3.axisLeft(y));
     .text(`Top 10 — Year ${state.year}`);
 }
 
-// ---------- Histogram setup ----------
+// =======================================================
+// HISTOGRAM
+// =======================================================
 const histCfg = {
+  w: 700,
   h: 260,
   m: { top: 18, right: 16, bottom: 55, left: 52 }
 };
 
 let histSvg, histG, histXAxisG, histYAxisG;
 
+function innerHistW() {
+  return histCfg.w - histCfg.m.left - histCfg.m.right;
+}
+function innerHistH() {
+  return histCfg.h - histCfg.m.top - histCfg.m.bottom;
+}
+
 function initHistChart() {
-  const el = d3.select("#histChart");
-  el.selectAll("*").remove();
-
-  const w = el.node().clientWidth || 520;
-
-  histSvg = el.append("svg")
-    .attr("width", w)
-    .attr("height", histCfg.h);
+  histSvg = makeResponsiveSvg("#histChart", histCfg.w, histCfg.h);
 
   histG = histSvg.append("g")
     .attr("transform", `translate(${histCfg.m.left},${histCfg.m.top})`);
@@ -204,16 +216,9 @@ function initHistChart() {
     .attr("class", "axis");
 }
 
-function innerHistW() {
-  const w = +histSvg.attr("width");
-  return w - histCfg.m.left - histCfg.m.right;
-}
-function innerHistH() {
-  return histCfg.h - histCfg.m.top - histCfg.m.bottom;
-}
-
 function renderHistChart() {
-  // values for selected year
+  if (!histG) return;
+
   const values = fullData
     .filter(d => d.Year === state.year && d.life != null)
     .map(d => d.life);
@@ -262,23 +267,26 @@ function renderHistChart() {
     .text(`Distribution — Year ${state.year}`);
 }
 
-// ---------- Scatter setup ----------
+// =======================================================
+// SCATTER
+// =======================================================
 const scatCfg = {
+  w: 700,
   h: 260,
   m: { top: 18, right: 16, bottom: 55, left: 52 }
 };
 
 let scatSvg, scatG, scatXAxisG, scatYAxisG;
 
+function innerScatW() {
+  return scatCfg.w - scatCfg.m.left - scatCfg.m.right;
+}
+function innerScatH() {
+  return scatCfg.h - scatCfg.m.top - scatCfg.m.bottom;
+}
+
 function initScatterChart() {
-  const el = d3.select("#scatterChart");
-  el.selectAll("*").remove();
-
-  const w = el.node().clientWidth || 520;
-
-  scatSvg = el.append("svg")
-    .attr("width", w)
-    .attr("height", scatCfg.h);
+  scatSvg = makeResponsiveSvg("#scatterChart", scatCfg.w, scatCfg.h);
 
   scatG = scatSvg.append("g")
     .attr("transform", `translate(${scatCfg.m.left},${scatCfg.m.top})`);
@@ -291,18 +299,10 @@ function initScatterChart() {
     .attr("class", "axis");
 }
 
-function innerScatW() {
-  const w = +scatSvg.attr("width");
-  return w - scatCfg.m.left - scatCfg.m.right;
-}
-function innerScatH() {
-  return scatCfg.h - scatCfg.m.top - scatCfg.m.bottom;
-}
-
 function renderScatterChart() {
-  const rows = fullData
-    .filter(d => d.Year === state.year && d.life != null && d.gdp != null);
+  if (!scatG) return;
 
+  const rows = fullData.filter(d => d.Year === state.year && d.life != null && d.gdp != null);
   if (rows.length === 0) return;
 
   const x = d3.scaleLinear()
@@ -332,9 +332,7 @@ function renderScatterChart() {
       );
     })
     .on("mouseleave", hideTooltip)
-    .on("click", (_, d) => {
-      setCountry(d.Country);
-    });
+    .on("click", (_, d) => setCountry(d.Country));
 
   scatG.selectAll("text.scatTitle")
     .data([0])
@@ -346,23 +344,26 @@ function renderScatterChart() {
     .text(`GDP vs Life Expectancy — Year ${state.year}`);
 }
 
-// ---------- Line setup ----------
+// =======================================================
+// LINE
+// =======================================================
 const lineCfg = {
+  w: 700,
   h: 260,
   m: { top: 18, right: 16, bottom: 55, left: 52 }
 };
 
 let lineSvg, lineG, lineXAxisG, lineYAxisG;
 
+function innerLineW() {
+  return lineCfg.w - lineCfg.m.left - lineCfg.m.right;
+}
+function innerLineH() {
+  return lineCfg.h - lineCfg.m.top - lineCfg.m.bottom;
+}
+
 function initLineChart() {
-  const el = d3.select("#lineChart");
-  el.selectAll("*").remove();
-
-  const w = el.node().clientWidth || 520;
-
-  lineSvg = el.append("svg")
-    .attr("width", w)
-    .attr("height", lineCfg.h);
+  lineSvg = makeResponsiveSvg("#lineChart", lineCfg.w, lineCfg.h);
 
   lineG = lineSvg.append("g")
     .attr("transform", `translate(${lineCfg.m.left},${lineCfg.m.top})`);
@@ -375,16 +376,8 @@ function initLineChart() {
     .attr("class", "axis");
 }
 
-function innerLineW() {
-  const w = +lineSvg.attr("width");
-  return w - lineCfg.m.left - lineCfg.m.right;
-}
-function innerLineH() {
-  return lineCfg.h - lineCfg.m.top - lineCfg.m.bottom;
-}
-
 function renderLineChart() {
-  if (!state.country) return;
+  if (!lineG || !state.country) return;
 
   const rows = fullData
     .filter(d => d.Country === state.country && d.life != null)
@@ -407,7 +400,6 @@ function renderLineChart() {
     .x(d => x(d.Year))
     .y(d => y(d.life));
 
-  // Line path
   lineG.selectAll("path.trend")
     .data([rows])
     .join("path")
@@ -417,7 +409,6 @@ function renderLineChart() {
     .attr("stroke-width", 2)
     .attr("d", line);
 
-  // Selected year highlight dot
   const yr = rows.find(d => d.Year === state.year);
 
   lineG.selectAll("circle.yearDot")
@@ -436,7 +427,6 @@ function renderLineChart() {
     })
     .on("mouseleave", hideTooltip);
 
-  // Title text inside chart
   lineG.selectAll("text.lineTitle")
     .data([0])
     .join("text")
@@ -447,7 +437,9 @@ function renderLineChart() {
     .text(`Trend — ${state.country}`);
 }
 
-// ---------- Load data + connect slider ----------
+// =======================================================
+// LOAD DATA + INIT
+// =======================================================
 d3.csv(CSV_PATH, d => ({
   Country: d.Country?.trim(),
   Year: toNumber(d.Year),
@@ -459,15 +451,13 @@ d3.csv(CSV_PATH, d => ({
   fullData = data.filter(d => d.Country && d.Year && d.life != null);
 
   const years = Array.from(new Set(fullData.map(d => d.Year))).sort((a, b) => a - b);
-  const minYear = years[0];
-  const maxYear = years[years.length - 1];
+  minYearGlobal = years[0];
+  maxYearGlobal = years[years.length - 1];
 
-  state.year = maxYear;
+  state.year = maxYearGlobal;
 
-  // --- Country dropdown ---
+  // Dropdown
   const countries = Array.from(new Set(fullData.map(d => d.Country))).sort(d3.ascending);
-
-  // default country (if not already set)
   if (!state.country) state.country = countries[0];
 
   const countrySelect = d3.select("#countrySelect");
@@ -481,36 +471,49 @@ d3.csv(CSV_PATH, d => ({
 
   countrySelect.on("change", () => {
     setCountry(countrySelect.property("value"));
-    updateDebug(minYear, maxYear);
   });
 
-  // --- Slider wiring ---
+  // Slider
   const yearSlider = document.getElementById("yearSlider");
-  const yearValue  = document.getElementById("yearValue");
+  const yearValue = document.getElementById("yearValue");
 
-  yearSlider.min = minYear;
-  yearSlider.max = maxYear;
+  yearSlider.min = minYearGlobal;
+  yearSlider.max = maxYearGlobal;
   yearSlider.value = state.year;
   yearValue.textContent = state.year;
-
-  // --- Init charts ---
-  initBarChart();
-  initHistChart();
-  initScatterChart();
-  initLineChart();
-
-  // --- First render ---
-  updateDebug(minYear, maxYear);
-  renderBarChart();
-  renderHistChart();
-  renderScatterChart();
-  renderLineChart();
 
   yearSlider.addEventListener("input", () => {
     state.year = +yearSlider.value;
     yearValue.textContent = state.year;
 
-    updateDebug(minYear, maxYear);
+    updateDebug();
+    renderBarChart();
+    renderHistChart();
+    renderScatterChart();
+    renderLineChart();
+  });
+
+  // Init charts
+  initBarChart();
+  initHistChart();
+  initScatterChart();
+  initLineChart();
+
+  // First render
+  updateDebug();
+  renderBarChart();
+  renderHistChart();
+  renderScatterChart();
+  renderLineChart();
+
+  // Resize handler (now safe because SVG is responsive)
+  window.addEventListener("resize", () => {
+    // re-init to reset viewBox if you want (optional)
+    initBarChart();
+    initHistChart();
+    initScatterChart();
+    initLineChart();
+
     renderBarChart();
     renderHistChart();
     renderScatterChart();
@@ -521,8 +524,3 @@ d3.csv(CSV_PATH, d => ({
   console.error("CSV FAILED", err);
   document.getElementById("debug").textContent = "CSV load failed — check console.";
 });
-
-function updateDebug(minYear, maxYear) {
-  document.getElementById("debug").textContent =
-    `Loaded ${fullData.length} rows • Year range: ${minYear}–${maxYear} • Selected year: ${state.year} • Selected country: ${state.country ?? "-"}`;
-}

@@ -45,7 +45,10 @@ h1{ text-align:center; margin: 6px 0 6px 0; }
   gap: 14px;
 }
 
-#yearSlider{ width: 100%; }
+#yearSlider{
+  flex: 1;
+  min-width: 160px;
+}
 
 .yearValue{
   min-width: 52px;
@@ -104,4 +107,28 @@ h1{ text-align:center; margin: 6px 0 6px 0; }
   border: 1px solid #ccc;
   border-radius: 8px;
   background: white;
+}
+
+@media (max-width: 900px){
+  .controlRow{
+    flex-wrap: wrap;
+  }
+  #countrySelect{
+    min-width: 180px;
+  }
+}
+
+.viz{
+  width: 100%;
+  overflow: hidden;
+}
+
+.viz svg{
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.panel{
+  overflow: hidden;
 }
