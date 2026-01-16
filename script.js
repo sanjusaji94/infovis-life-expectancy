@@ -362,11 +362,13 @@ d3.csv(CSV_PATH, d => ({
   // init charts
   initBarChart();
   initHistChart();
+  initScatterChart();
 
   // first render
   updateDebug(minYear, maxYear);
   renderBarChart();
   renderHistChart();
+  renderScatterChart();
 
   yearSlider.addEventListener("input", () => {
     state.year = +yearSlider.value;
@@ -375,6 +377,8 @@ d3.csv(CSV_PATH, d => ({
     updateDebug(minYear, maxYear);
     renderBarChart(); // bar updates with year
     renderHistChart(); // histogram updates with year
+    renderScatterChart(); 
+
   });
 
 }).catch(err => {
