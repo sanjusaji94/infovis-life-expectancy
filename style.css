@@ -95,3 +95,13 @@ h1{ text-align:center; margin: 6px 0 6px 0; }
 
 .bar:hover { opacity: 0.85; cursor: pointer; }
 .axis path, .axis line { stroke: #bbb; }
+
+.spacer{ flex: 1; }
+
+#countrySelect{
+  min-width: 220px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: white;
+}

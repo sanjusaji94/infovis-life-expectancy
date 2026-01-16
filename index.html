@@ -14,13 +14,17 @@
       <h1>Global Life Expectancy Dashboard</h1>
       <p class="subtitle">Exploring life expectancy trends and correlations with economic indicators</p>
 
-      <div class="controls">
-        <div class="controlRow">
-          <label for="yearSlider"><b>Select Year:</b></label>
-          <input id="yearSlider" type="range" min="2000" max="2019" step="1" value="2019" />
-          <div id="yearValue" class="yearValue">2019</div>
-        </div>
-      </div>
+    <div class="controlRow">
+      <label for="yearSlider"><b>Select Year:</b></label>
+        <input id="yearSlider" type="range" min="2000" max="2019" step="1" value="2019" />
+        <div id="yearValue" class="yearValue">2019</div>
+
+        <div class="spacer"></div>
+
+        <label for="countrySelect"><b>Country:</b></label>
+    <select id="countrySelect"></select>
+  </div>
+
 
       <div class="grid">
         <div class="panel">

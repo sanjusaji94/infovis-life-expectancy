@@ -3,11 +3,13 @@ console.log("SCRIPT OK");
 const CSV_PATH = "data/Life_Expectancy_Data.csv";
 const COL_LIFE = "Life expectancy "; // trailing space in dataset
 
+//  Shared state
 const state = {
   year: null,
   country: null
 };
 
+// Helper utilities
 function toNumber(x) {
   const v = (x ?? "").toString().trim();
   if (v === "") return null;
@@ -33,6 +35,19 @@ function showTooltip(html, event) {
 }
 function hideTooltip() {
   tooltip.style("opacity", 0);
+}
+
+function setCountry(newCountry) {
+  state.country = newCountry;
+
+  // update dropdown UI
+  const sel = document.getElementById("countrySelect");
+  if (sel && sel.value !== newCountry) sel.value = newCountry;
+
+  // re-render charts that depend on selected country
+  renderLineChart();
+  renderBarChart();       // highlight if in top 10
+  renderScatterChart();   // highlight point
 }
 
 // ---------- Bar chart setup ----------
@@ -68,8 +83,12 @@ function initBarChart() {
 window.addEventListener("resize", () => {
   initBarChart();
   initHistChart();
+  initScatterChart();
+  initLineChart();
   renderBarChart();
   renderHistChart();
+  renderScatterChart();
+  renderLineChart();
 });
 
 function innerBarW() {
@@ -142,9 +161,7 @@ barYAxisG.call(d3.axisLeft(y));
     })
     .on("mouseleave", hideTooltip)
     .on("click", (_, d) => {
-      state.country = d.Country;       // selection event
-      renderBarChart();                // update highlight
-      renderLineChart();
+     setCountry(d.Country);
     });
 
   // Title inside chart (optional)
@@ -316,11 +333,7 @@ function renderScatterChart() {
     })
     .on("mouseleave", hideTooltip)
     .on("click", (_, d) => {
-      state.country = d.Country;
-      // update highlight in bar & scatter now
-      renderBarChart();
-      renderScatterChart();
-      // Next stage: renderLineChart() when line exists
+      setCountry(d.Country);
     });
 
   scatG.selectAll("text.scatTitle")
@@ -450,26 +463,43 @@ d3.csv(CSV_PATH, d => ({
   const maxYear = years[years.length - 1];
 
   state.year = maxYear;
-  state.country = "Afghanistan"; // fallback
-  const countries = Array.from(new Set(fullData.map(d => d.Country))).sort(d3.ascending);
-  state.country = countries[0];
 
-  // slider wiring
+  // --- Country dropdown ---
+  const countries = Array.from(new Set(fullData.map(d => d.Country))).sort(d3.ascending);
+
+  // default country (if not already set)
+  if (!state.country) state.country = countries[0];
+
+  const countrySelect = d3.select("#countrySelect");
+  countrySelect.selectAll("option")
+    .data(countries)
+    .join("option")
+    .attr("value", d => d)
+    .text(d => d);
+
+  countrySelect.property("value", state.country);
+
+  countrySelect.on("change", () => {
+    setCountry(countrySelect.property("value"));
+    updateDebug(minYear, maxYear);
+  });
+
+  // --- Slider wiring ---
   const yearSlider = document.getElementById("yearSlider");
-  const yearValue = document.getElementById("yearValue");
+  const yearValue  = document.getElementById("yearValue");
 
   yearSlider.min = minYear;
   yearSlider.max = maxYear;
   yearSlider.value = state.year;
   yearValue.textContent = state.year;
 
-  // init charts
+  // --- Init charts ---
   initBarChart();
   initHistChart();
   initScatterChart();
   initLineChart();
 
-  // first render
+  // --- First render ---
   updateDebug(minYear, maxYear);
   renderBarChart();
   renderHistChart();
@@ -481,11 +511,10 @@ d3.csv(CSV_PATH, d => ({
     yearValue.textContent = state.year;
 
     updateDebug(minYear, maxYear);
-    renderBarChart(); // bar updates with year
-    renderHistChart(); // histogram updates with year
-    renderScatterChart(); 
+    renderBarChart();
+    renderHistChart();
+    renderScatterChart();
     renderLineChart();
-
   });
 
 }).catch(err => {
