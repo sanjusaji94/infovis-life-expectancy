@@ -60,6 +60,9 @@ The dashboard consists of four coordinated views:
 
 ## Project Structure
 
+## Project Structure
+
+```text
 .
 ├── index.html
 ├── style.css
