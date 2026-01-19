@@ -1,10 +1,10 @@
-# Global Life Expectancy Across Countries (2000–2019)
+# Global Life Expectancy Across Countries (2000–2015)
 
 🔗 **Live Demo:**  
 https://sanjusaji94.github.io/infovis-life-expectancy/
 
 ## Overview
-This project is an interactive web-based visualization that explores **global life expectancy across countries from 2000 to 2019**.  
+This project is an interactive web-based visualization that explores **global life expectancy across countries from 2000 to 2015**.  
 The dashboard enables users to analyze temporal trends, compare countries, and examine the relationship between life expectancy and economic indicators.
 
 The project was developed as part of **Group Assignment 2 (Interactive Visualization Project)** for the *Information Visualization* course.
