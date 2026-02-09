@@ -3,6 +3,10 @@
 🔗 **Live Demo:**  
 https://sanjusaji94.github.io/infovis-life-expectancy/
 
+## Screenshot
+<img width="1557" height="906" alt="Screenshot 2026-02-09 135637" src="https://github.com/user-attachments/assets/beb9beae-af47-4ee8-9853-5ce328e81ad9" />
+
+
 ## Overview
 This project is an interactive web-based visualization that explores **global life expectancy across countries from 2000 to 2015**.  
 The dashboard enables users to analyze temporal trends, compare countries, and examine the relationship between life expectancy and economic indicators.
